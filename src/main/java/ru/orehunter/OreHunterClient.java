@@ -7,16 +7,15 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
@@ -48,56 +47,47 @@ public final class OreHunterClient implements ClientModInitializer {
             target = null;
             miningTarget = null;
             scanCooldown = 0;
-            if (client.player != null) {
-                client.player.displayClientMessage(Component.literal(enabled ? "OreHunter: ON" : "OreHunter: OFF"), true);
-            }
+            if (client.player != null) client.player.displayClientMessage(
+                    Component.literal(enabled ? "OreHunter: ON" : "OreHunter: OFF"), true);
         }
         if (!enabled || client.player == null || client.level == null || client.gameMode == null) return;
 
-        // Manual WASD always has priority. The bot yields control immediately.
-        if (hasManualMovement(client)) return;
+        // Let physical WASD take over immediately; J disables automation completely.
+        if (manualMovementPressed()) return;
 
         if (eatCooldown > 0) eatCooldown--;
         if (attackCooldown > 0) attackCooldown--;
         if (statusCooldown-- <= 0) {
-            String msg = target == null ? "OreHunter: ищу руду..." :
-                    "OreHunter: цель " + target.getX() + " " + target.getY() + " " + target.getZ();
-            client.player.displayClientMessage(Component.literal(msg), true);
+            client.player.displayClientMessage(Component.literal(target == null ? "OreHunter: ищу руду..." :
+                    "OreHunter: цель " + target.getX() + " " + target.getY() + " " + target.getZ()), true);
             statusCooldown = 30;
         }
 
-        // Eat from the hotbar when hunger is low.
         if (client.player.getFoodData().getFoodLevel() <= 14 && eatCooldown == 0) {
             int foodSlot = findFoodSlot(client);
             if (foodSlot >= 0) {
-                int oldSlot = client.player.getInventory().getSelectedSlot();
                 client.player.getInventory().setSelectedSlot(foodSlot);
                 client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
                 eatCooldown = 35;
-                if (oldSlot != foodSlot) client.player.getInventory().setSelectedSlot(oldSlot);
                 stopForward(client);
                 return;
             }
         }
 
-        // Attack mobs that are actively targeting the player.
         Mob threat = findThreat(client);
         if (threat != null) {
             stopForward(client);
             face(client, threat.position().add(0, threat.getBbHeight() * 0.65, 0));
             if (attackCooldown == 0) {
-                int oldSlot = client.player.getInventory().getSelectedSlot();
                 int weapon = findSwordSlot(client);
                 if (weapon >= 0) client.player.getInventory().setSelectedSlot(weapon);
                 client.gameMode.attack(client.player, threat);
                 client.player.swing(InteractionHand.MAIN_HAND);
-                client.player.getInventory().setSelectedSlot(oldSlot);
                 attackCooldown = 10;
             }
             return;
         }
 
-        // Move toward nearby dropped items so they can be collected.
         ItemEntity drop = findNearbyDrop(client);
         if (drop != null) {
             double d = client.player.position().distanceTo(drop.position());
@@ -113,7 +103,6 @@ public final class OreHunterClient implements ClientModInitializer {
         }
 
         if (target == null) {
-            // Basic exploration fallback; no blind digging through unknown blocks.
             client.options.keyUp.setDown(true);
             return;
         }
@@ -127,7 +116,7 @@ public final class OreHunterClient implements ClientModInitializer {
 
         client.options.keyUp.setDown(false);
         selectBestTool(client, client.level.getBlockState(target));
-        if (client.hitResult instanceof BlockHitResult hit && hit.getBlockPos().equals(target)) {
+        if (client.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit && hit.getBlockPos().equals(target)) {
             if (!target.equals(miningTarget)) {
                 miningTarget = target.immutable();
                 client.gameMode.startDestroyBlock(target, hit.getDirection());
@@ -139,22 +128,16 @@ public final class OreHunterClient implements ClientModInitializer {
         }
     }
 
-    private static boolean hasManualMovement(Minecraft client) {
-        long window = client.getWindow().getWindow();
-        boolean manual = pressed(window, client.options.keyUp) || pressed(window, client.options.keyDown)
-                || pressed(window, client.options.keyLeft) || pressed(window, client.options.keyRight);
-        if (manual) {
-            client.options.keyUp.setDown(pressed(window, client.options.keyUp));
-            client.options.keyDown.setDown(pressed(window, client.options.keyDown));
-            client.options.keyLeft.setDown(pressed(window, client.options.keyLeft));
-            client.options.keyRight.setDown(pressed(window, client.options.keyRight));
-        }
-        return manual;
+    private static boolean manualMovementPressed() {
+        long window = GLFW.glfwGetCurrentContext();
+        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS;
     }
 
     private static void stopForward(Minecraft client) {
-        long window = client.getWindow().getWindow();
-        client.options.keyUp.setDown(pressed(window, client.options.keyUp));
+        client.options.keyUp.setDown(false);
     }
 
     private static Mob findThreat(Minecraft client) {
@@ -174,19 +157,18 @@ public final class OreHunterClient implements ClientModInitializer {
     private static int findFoodSlot(Minecraft client) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.isEdible()) return i;
+            if (!stack.isEmpty() && stack.get(DataComponents.FOOD) != null) return i;
         }
         return -1;
     }
 
     private static int findSwordSlot(Minecraft client) {
-        int best = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
-            if (stack.getItem() instanceof SwordItem && !stack.isEmpty()
-                    && stack.getDamageValue() < stack.getMaxDamage() - 1) best = i;
+            if (!stack.isEmpty() && stack.is(ItemTags.SWORDS)
+                    && (stack.getMaxDamage() == 0 || stack.getDamageValue() < stack.getMaxDamage() - 1)) return i;
         }
-        return best;
+        return -1;
     }
 
     private static void selectBestTool(Minecraft client, BlockState state) {
@@ -194,7 +176,7 @@ public final class OreHunterClient implements ClientModInitializer {
         float bestSpeed = -1.0F;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
-            if (stack.isEmpty() || stack.getDamageValue() >= stack.getMaxDamage() - 1) continue;
+            if (stack.isEmpty() || (stack.getMaxDamage() > 0 && stack.getDamageValue() >= stack.getMaxDamage() - 1)) continue;
             float speed = stack.getDestroySpeed(state);
             if (speed > bestSpeed) {
                 bestSpeed = speed;
@@ -237,10 +219,5 @@ public final class OreHunterClient implements ClientModInitializer {
         BlockState state = client.level.getBlockState(pos);
         return state.is(Blocks.DIAMOND_ORE) || state.is(Blocks.DEEPSLATE_DIAMOND_ORE)
                 || state.is(Blocks.ANCIENT_DEBRIS);
-    }
-
-    private static boolean pressed(long window, KeyMapping mapping) {
-        int key = mapping.getKey().getValue();
-        return key >= 0 && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
     }
 }
