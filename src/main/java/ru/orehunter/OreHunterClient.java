@@ -22,6 +22,7 @@ public final class OreHunterClient implements ClientModInitializer {
     private static KeyMapping toggleKey;
     private static boolean enabled = false;
     private static BlockPos target = null;
+    private static BlockPos miningTarget = null;
     private static int scanCooldown = 0;
     private static int exploreTicks = 0;
 
@@ -41,15 +42,12 @@ public final class OreHunterClient implements ClientModInitializer {
             enabled = !enabled;
             target = null;
             scanCooldown = 0;
-            releaseMovement(client);
+            if (!enabled) restorePhysicalMovement(client);
             if (client.player != null) {
                 client.player.displayClientMessage(Component.literal(enabled ? "OreHunter: ON" : "OreHunter: OFF"), true);
             }
         }
-        if (!enabled || client.player == null || client.level == null || client.gameMode == null) {
-            if (!enabled) releaseMovement(client);
-            return;
-        }
+        if (!enabled || client.player == null || client.level == null || client.gameMode == null) return;
         if (scanCooldown-- <= 0 || !isOre(client, target)) {
             target = findNearestOre(client);
             scanCooldown = SEARCH_INTERVAL;
@@ -90,11 +88,17 @@ public final class OreHunterClient implements ClientModInitializer {
             client.options.keyLeft.setDown(false);
             client.options.keyRight.setDown(false);
         } else {
-            releaseMovement(client);
+            restorePhysicalMovement(client);
             if (client.hitResult instanceof BlockHitResult hit && hit.getBlockPos().equals(target)) {
-                client.gameMode.startDestroyBlock(target, hit.getDirection());
-                client.gameMode.continueDestroyBlock(target, hit.getDirection());
-                client.player.swing(InteractionHand.MAIN_HAND);
+                if (!target.equals(miningTarget)) {
+                    miningTarget = target.immutable();
+                    client.gameMode.startDestroyBlock(target, hit.getDirection());
+                } else {
+                    client.gameMode.continueDestroyBlock(target, hit.getDirection());
+                    client.player.swing(InteractionHand.MAIN_HAND);
+                }
+            } else {
+                miningTarget = null;
             }
         }
     }
@@ -127,11 +131,17 @@ public final class OreHunterClient implements ClientModInitializer {
                 || state.is(Blocks.ANCIENT_DEBRIS);
     }
 
-    private static void releaseMovement(Minecraft client) {
-        if (client.options == null) return;
-        client.options.keyUp.setDown(false);
-        client.options.keyDown.setDown(false);
-        client.options.keyLeft.setDown(false);
-        client.options.keyRight.setDown(false);
+    private static void restorePhysicalMovement(Minecraft client) {
+        if (client.options == null || client.getWindow() == null) return;
+        long window = client.getWindow().getWindow();
+        client.options.keyUp.setDown(isPhysicallyPressed(window, client.options.keyUp));
+        client.options.keyDown.setDown(isPhysicallyPressed(window, client.options.keyDown));
+        client.options.keyLeft.setDown(isPhysicallyPressed(window, client.options.keyLeft));
+        client.options.keyRight.setDown(isPhysicallyPressed(window, client.options.keyRight));
+    }
+
+    private static boolean isPhysicallyPressed(long window, KeyMapping mapping) {
+        int key = mapping.getKey().getValue();
+        return key >= 0 && GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
     }
 }
