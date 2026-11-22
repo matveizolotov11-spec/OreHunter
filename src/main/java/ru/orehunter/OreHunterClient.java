@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Blocks;
@@ -38,7 +39,11 @@ public final class OreHunterClient implements ClientModInitializer {
         while (toggleKey.consumeClick()) {
             enabled = !enabled;
             target = null;
+            scanCooldown = 0;
             releaseMovement(client);
+            if (client.player != null) {
+                client.player.displayClientMessage(Component.literal(enabled ? "OreHunter: ON" : "OreHunter: OFF"), true);
+            }
         }
         if (!enabled || client.player == null || client.level == null || client.gameMode == null) {
             releaseMovement(client);
@@ -50,8 +55,12 @@ public final class OreHunterClient implements ClientModInitializer {
         }
         if (target == null) {
             releaseMovement(client);
+            if (scanCooldown == SEARCH_INTERVAL - 1) {
+                client.player.displayClientMessage(Component.literal("OreHunter: no ore found within 16 blocks"), true);
+            }
             return;
         }
+        client.player.displayClientMessage(Component.literal("OreHunter: target " + target.getX() + " " + target.getY() + " " + target.getZ()), true);
 
         Vec3 eye = client.player.getEyePosition();
         Vec3 delta = Vec3.atCenterOf(target).subtract(eye);
