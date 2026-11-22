@@ -3,9 +3,12 @@ package ru.orehunter;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -18,6 +21,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
@@ -35,6 +39,7 @@ public final class OreHunterClient implements ClientModInitializer {
     private static BlockPos target;
     private static BlockPos miningTarget;
     private static List<BlockPos> route = List.of();
+    private static List<BlockPos> oreHighlights = List.of();
     private static int scanCooldown, pathCooldown, eatCooldown, attackCooldown, statusCooldown;
 
     @Override
@@ -43,6 +48,7 @@ public final class OreHunterClient implements ClientModInitializer {
                 "key.orehunter.toggle", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_J, KeyMapping.Category.MISC));
         ClientTickEvents.END_CLIENT_TICK.register(OreHunterClient::tick);
+        WorldRenderEvents.BEFORE_DEBUG_RENDER.register(OreHunterClient::renderOreHighlights);
     }
 
     private static void tick(Minecraft client) {
@@ -51,6 +57,7 @@ public final class OreHunterClient implements ClientModInitializer {
             target = null;
             miningTarget = null;
             route = List.of();
+            oreHighlights = List.of();
             releaseMovement(client);
             scanCooldown = pathCooldown = 0;
             if (client.player != null) client.player.displayClientMessage(
@@ -117,7 +124,8 @@ public final class OreHunterClient implements ClientModInitializer {
 
         if (scanCooldown-- <= 0 || !isOre(client, target)) {
             BlockPos previous = target;
-            target = findNearestOre(client);
+            oreHighlights = findNearbyOres(client);
+            target = oreHighlights.isEmpty() ? null : oreHighlights.get(0);
             scanCooldown = SEARCH_INTERVAL;
             if (!Objects.equals(previous, target)) {
                 route = List.of();
@@ -221,8 +229,11 @@ public final class OreHunterClient implements ClientModInitializer {
             ItemStack stack = client.player.getInventory().getItem(i);
             if (stack.isEmpty() || !stack.is(ItemTags.SWORDS)
                     || (stack.getMaxDamage() > 0 && stack.getDamageValue() >= stack.getMaxDamage() - 1)) continue;
-            float damage = stack.getItem().getAttackDamageBonus(client.player, 0, InteractionHand.MAIN_HAND);
-            if (damage > bestDamage) { bestDamage = damage; best = i; }
+            // Prefer the first durable sword; the exact damage bonus API differs
+            // between game versions, so do not rely on a hand-specific bonus here.
+            float score = stack.getMaxDamage() == 0 ? 1.0F :
+                    1.0F - (float) stack.getDamageValue() / stack.getMaxDamage();
+            if (score > bestDamage) { bestDamage = score; best = i; }
         }
         return best;
     }
@@ -242,8 +253,10 @@ public final class OreHunterClient implements ClientModInitializer {
     private static void face(Minecraft client, Vec3 point) {
         Vec3 delta = point.subtract(client.player.getEyePosition());
         double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
-        float yaw = (float)(Mth.atan2(delta.z, delta.x) * (180.0 / Math.PI)) - 90.0F;
-        float pitch = (float)(-(Mth.atan2(delta.y, horizontal) * (180.0 / Math.PI)));
+        float desiredYaw = (float)(Mth.atan2(delta.z, delta.x) * (180.0 / Math.PI)) - 90.0F;
+        float desiredPitch = (float)(-(Mth.atan2(delta.y, horizontal) * (180.0 / Math.PI)));
+        float yaw = Mth.rotLerp(0.22F, client.player.getYRot(), desiredYaw);
+        float pitch = Mth.lerp(0.22F, client.player.getXRot(), desiredPitch);
         client.player.setYRot(yaw);
         client.player.setYHeadRot(yaw);
         client.player.setXRot(pitch);
@@ -288,10 +301,14 @@ public final class OreHunterClient implements ClientModInitializer {
     }
 
     private static boolean canStandAt(Minecraft client, BlockPos feet) {
+        // Never plan to dig the floor directly under the player's feet.
+        // A route node is valid only when it has safe solid support and a
+        // two-block-high body space that can be cleared before entering.
         BlockPos floor = feet.below();
         BlockState floorState = client.level.getBlockState(floor);
-        if (floorState.getFluidState().isEmpty() == false
-                || !floorState.isFaceSturdy(client.level, floor, Direction.UP)) return false;
+        if (!floorState.getFluidState().isEmpty()
+                || !floorState.isFaceSturdy(client.level, floor, Direction.UP)
+                || hasNearbyLava(client, floor)) return false;
         return canClear(client, feet) && canClear(client, feet.above());
     }
 
@@ -329,10 +346,19 @@ public final class OreHunterClient implements ClientModInitializer {
             return;
         }
         BlockPos next = route.get(1);
+        // Clear the lower block first, then the block above it. This produces
+        // a one-block-wide, two-block-high tunnel without breaking the floor.
         BlockPos obstruction = null;
         if (!client.level.getBlockState(next).isAir()) obstruction = next;
         else if (!client.level.getBlockState(next.above()).isAir()) obstruction = next.above();
-        if (obstruction != null && canClear(client, obstruction)) {
+
+        if (obstruction != null) {
+            if (!canClear(client, obstruction)) {
+                route = List.of();
+                releaseMovement(client);
+                pathCooldown = 0;
+                return;
+            }
             releaseMovement(client);
             face(client, Vec3.atCenterOf(obstruction));
             selectBestTool(client, client.level.getBlockState(obstruction));
@@ -347,22 +373,50 @@ public final class OreHunterClient implements ClientModInitializer {
             return;
         }
         miningTarget = null;
+        // Re-evaluate after falling/stepping so the bot never assumes it is
+        // still standing at the old Y coordinate.
+        if (next.getY() < here.getY() && client.player.getY() > next.getY() + 0.35) {
+            releaseMovement(client);
+            return;
+        }
         moveToward(client, Vec3.atCenterOf(next));
     }
 
-    private static BlockPos findNearestOre(Minecraft client) {
+    private static List<BlockPos> findNearbyOres(Minecraft client) {
         BlockPos origin = client.player.blockPosition();
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
+        ArrayList<BlockPos> ores = new ArrayList<>();
         for (int x = -SEARCH_RADIUS; x <= SEARCH_RADIUS; x++)
             for (int y = -SEARCH_RADIUS; y <= SEARCH_RADIUS; y++)
                 for (int z = -SEARCH_RADIUS; z <= SEARCH_RADIUS; z++) {
                     BlockPos pos = origin.offset(x, y, z);
-                    if (!isOre(client, pos)) continue;
-                    double distance = client.player.position().distanceToSqr(Vec3.atCenterOf(pos));
-                    if (distance < bestDistance) { bestDistance = distance; best = pos.immutable(); }
+                    if (isOre(client, pos)) ores.add(pos.immutable());
                 }
-        return best;
+        ores.sort(Comparator.comparingDouble(p ->
+                client.player.position().distanceToSqr(Vec3.atCenterOf(p))));
+        return ores;
+    }
+
+    private static void renderOreHighlights(WorldRenderContext context) {
+        Minecraft client = Minecraft.getInstance();
+        if (!enabled || client.level == null || oreHighlights.isEmpty()) return;
+        Vec3 camera = client.gameRenderer.getMainCamera().getPosition();
+        context.matrices().pushPose();
+        try {
+            var lines = context.consumers().getBuffer(RenderTypes.lines());
+            int count = Math.min(oreHighlights.size(), 32);
+            for (int i = 0; i < count; i++) {
+                BlockPos pos = oreHighlights.get(i);
+                double x = pos.getX() - camera.x;
+                double y = pos.getY() - camera.y;
+                double z = pos.getZ() - camera.z;
+                LevelRenderer.renderLineBox(context.matrices(), lines,
+                        new AABB(x + 0.002, y + 0.002, z + 0.002,
+                                x + 0.998, y + 0.998, z + 0.998),
+                        0.15F, 1.0F, 0.25F, 0.95F);
+            }
+        } finally {
+            context.matrices().popPose();
+        }
     }
 
     private static boolean isOre(Minecraft client, BlockPos pos) {
