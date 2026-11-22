@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "orehunter",
+  "version": "${version}",
+  "name": "OreHunter",
+  "description": "Client-side ore detection and mining helper for Minecraft 1.21.11.",
+  "authors": ["OreHunter"],
+  "environment": "client",
+  "entrypoints": { "client": ["ru.orehunter.OreHunterClient"] },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
