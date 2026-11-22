@@ -129,11 +129,9 @@ public final class OreHunterClient implements ClientModInitializer {
 
     private static void releaseMovement(Minecraft client) {
         if (client.options == null) return;
-        // Restore the real keyboard state; never leave WASD overridden after toggling off.
-        long window = client.getWindow().getWindow();
-        client.options.keyUp.setDown(InputConstants.isKeyDown(window, client.options.keyUp.getKey().getValue()));
-        client.options.keyDown.setDown(InputConstants.isKeyDown(window, client.options.keyDown.getKey().getValue()));
-        client.options.keyLeft.setDown(InputConstants.isKeyDown(window, client.options.keyLeft.getKey().getValue()));
-        client.options.keyRight.setDown(InputConstants.isKeyDown(window, client.options.keyRight.getKey().getValue()));
+        client.options.keyUp.setDown(false);
+        client.options.keyDown.setDown(false);
+        client.options.keyLeft.setDown(false);
+        client.options.keyRight.setDown(false);
     }
 }
