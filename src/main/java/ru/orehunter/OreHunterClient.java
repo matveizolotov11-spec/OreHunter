@@ -23,6 +23,7 @@ public final class OreHunterClient implements ClientModInitializer {
     private static boolean enabled = false;
     private static BlockPos target = null;
     private static int scanCooldown = 0;
+    private static int exploreTicks = 0;
 
     @Override
     public void onInitializeClient() {
@@ -46,7 +47,7 @@ public final class OreHunterClient implements ClientModInitializer {
             }
         }
         if (!enabled || client.player == null || client.level == null || client.gameMode == null) {
-            releaseMovement(client);
+            if (!enabled) releaseMovement(client);
             return;
         }
         if (scanCooldown-- <= 0 || !isOre(client, target)) {
@@ -54,12 +55,23 @@ public final class OreHunterClient implements ClientModInitializer {
             scanCooldown = SEARCH_INTERVAL;
         }
         if (target == null) {
-            releaseMovement(client);
+            // No ore in the current scan radius: keep exploring instead of standing still.
+            exploreTicks++;
+            if (exploreTicks >= 80) {
+                client.player.setYRot(client.player.getYRot() + 90.0F);
+                client.player.setYHeadRot(client.player.getYRot());
+                exploreTicks = 0;
+            }
+            client.options.keyUp.setDown(true);
+            client.options.keyDown.setDown(false);
+            client.options.keyLeft.setDown(false);
+            client.options.keyRight.setDown(false);
             if (scanCooldown == SEARCH_INTERVAL - 1) {
-                client.player.displayClientMessage(Component.literal("OreHunter: no ore found within 16 blocks"), true);
+                client.player.displayClientMessage(Component.literal("OreHunter: searching for ores..."), true);
             }
             return;
         }
+        exploreTicks = 0;
         client.player.displayClientMessage(Component.literal("OreHunter: target " + target.getX() + " " + target.getY() + " " + target.getZ()), true);
 
         Vec3 eye = client.player.getEyePosition();
@@ -117,9 +129,11 @@ public final class OreHunterClient implements ClientModInitializer {
 
     private static void releaseMovement(Minecraft client) {
         if (client.options == null) return;
-        client.options.keyUp.setDown(false);
-        client.options.keyDown.setDown(false);
-        client.options.keyLeft.setDown(false);
-        client.options.keyRight.setDown(false);
+        // Restore the real keyboard state; never leave WASD overridden after toggling off.
+        long window = client.getWindow().getWindow();
+        client.options.keyUp.setDown(InputConstants.isKeyDown(window, client.options.keyUp.getKey().getValue()));
+        client.options.keyDown.setDown(InputConstants.isKeyDown(window, client.options.keyDown.getKey().getValue()));
+        client.options.keyLeft.setDown(InputConstants.isKeyDown(window, client.options.keyLeft.getKey().getValue()));
+        client.options.keyRight.setDown(InputConstants.isKeyDown(window, client.options.keyRight.getKey().getValue()));
     }
 }
