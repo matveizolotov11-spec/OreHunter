@@ -31,7 +31,7 @@ public final class HitboxRenderer {
             if (!player.isAlive() || (player == minecraft.player && !HitboxConfig.showSelf)) continue;
 
             AABB box = player.getBoundingBox();
-            if (HitboxConfig.expandEnabled && minecraft.hasSingleplayerServer() && player != minecraft.player) {
+            if (HitboxConfig.expandEnabled && player != minecraft.player) {
                 double cx = (box.minX + box.maxX) * 0.5;
                 double cz = (box.minZ + box.maxZ) * 0.5;
                 double half = HitboxConfig.width * 0.5;
