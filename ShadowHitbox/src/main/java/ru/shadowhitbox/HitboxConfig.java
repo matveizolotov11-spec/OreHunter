@@ -27,7 +27,7 @@ public final class HitboxConfig {
     public static float alpha = 0.85f;
     public static float combatRange = 4.0f;
     public static float aimFov = 45.0f;
-    public static float aimSmoothness = 8.0f;
+    public static float aimSpeed = 0.85f;
 
     private HitboxConfig() {}
 
@@ -50,7 +50,9 @@ public final class HitboxConfig {
                     alpha = clamp(data.alpha, 0.05f, 1f);
                     combatRange = clamp(data.combatRange, 2.5f, 6.0f);
                     aimFov = clamp(data.aimFov, 5f, 180f);
-                    aimSmoothness = clamp(data.aimSmoothness, 1f, 20f);
+                    aimSpeed = data.aimSpeed > 0.0f
+                            ? clamp(data.aimSpeed, 0.15f, 1.5f)
+                            : clamp(6.8f / Math.max(1.0f, data.aimSmoothness), 0.15f, 1.5f);
                 }
             }
         } catch (Exception ignored) {
@@ -76,7 +78,7 @@ public final class HitboxConfig {
             data.alpha = alpha;
             data.combatRange = combatRange;
             data.aimFov = aimFov;
-            data.aimSmoothness = aimSmoothness;
+            data.aimSpeed = aimSpeed;
             Files.writeString(FILE, GSON.toJson(data));
         } catch (IOException exception) {
             System.err.println("[ShadowHitbox] Could not save config: " + exception.getMessage());
@@ -102,6 +104,8 @@ public final class HitboxConfig {
         float alpha = 0.85f;
         float combatRange = 4.0f;
         float aimFov = 45.0f;
+        float aimSpeed = 0.85f;
+        // Kept for migration from older config files.
         float aimSmoothness = 8.0f;
     }
 }
