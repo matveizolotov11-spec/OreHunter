@@ -131,24 +131,26 @@ public final class MaceDetector {
             return 0.0f;
         }
 
-        float health = player.getHealth() + player.getAbsorptionAmount();
-        if (health == 20.0f) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.world != null) {
-                var scoreboard = client.world.getScoreboard();
-                ScoreboardObjective objective =
-                        scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME);
+        // On multiplayer servers, the entity health attribute of remote players is
+        // often not synchronized. If the server publishes a BELOW_NAME score, use
+        // that value first (this is the usual way servers expose player HP).
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world != null) {
+            var scoreboard = client.world.getScoreboard();
+            ScoreboardObjective objective =
+                    scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME);
 
-                if (objective != null) {
-                    ReadableScoreboardScore score = scoreboard.getScore(player, objective);
-                    if (score != null) {
-                        health = score.getScore();
-                    }
+            if (objective != null) {
+                ReadableScoreboardScore score = scoreboard.getScore(player, objective);
+                if (score != null) {
+                    return Math.max(0.0f, Math.min(20.0f, score.getScore()));
                 }
             }
         }
 
-        return Math.max(0.0f, health);
+        // Fallback for servers that synchronize entity health directly.
+        float health = player.getHealth() + player.getAbsorptionAmount();
+        return Math.max(0.0f, Math.min(20.0f, health));
     }
 
     public static int getHealthColor(float health) {
