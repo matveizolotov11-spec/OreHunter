@@ -2,6 +2,7 @@ package ru.shadowhitbox;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -87,8 +88,11 @@ public final class ShadowHitboxScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int button = click.button();
+        if (button != 0) return super.mouseClicked(click, doubled);
         int left = (width - panelWidth) / 2;
         int top = (height - panelHeight) / 2;
         int x = left + 20;
@@ -117,15 +121,15 @@ public final class ShadowHitboxScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (dragging != null && button == 0) { updateSlider(mouseX); return true; }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    public boolean mouseDragged(MouseButtonEvent click, double dragX, double dragY) {
+        if (dragging != null && click.button() == 0) { updateSlider(click.x()); return true; }
+        return super.mouseDragged(click, dragX, dragY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         if (dragging != null) { dragging = null; HitboxConfig.save(); return true; }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     private void updateSlider(double mouseX) {
