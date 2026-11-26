@@ -10,7 +10,7 @@ public final class ShadowHitboxScreen extends Screen {
     private Tab tab = Tab.COMBAT;
     private String dragging = null;
     private final int panelWidth = 430;
-    private final int panelHeight = 300;
+    private final int panelHeight = 390;
 
     public ShadowHitboxScreen() {
         super(Component.literal("ShadowHitbox"));
@@ -106,10 +106,10 @@ public final class ShadowHitboxScreen extends Screen {
         } else if (tab == Tab.VISUALS && inside(mouseX, mouseY, x + 310, y + 43, 60, 24)) {
             HitboxConfig.showSelf = !HitboxConfig.showSelf; HitboxConfig.save();
         } else if (tab == Tab.VISUALS) {
-            if (inside(mouseX, mouseY, x, y + 59, 370, 18)) dragging = "red";
-            else if (inside(mouseX, mouseY, x, y + 102, 370, 18)) dragging = "green";
-            else if (inside(mouseX, mouseY, x, y + 145, 370, 18)) dragging = "blue";
-            else if (inside(mouseX, mouseY, x, y + 188, 370, 18)) dragging = "alpha";
+            if (inside(mouseX, mouseY, x, y + 102, 370, 18)) dragging = "red";
+            else if (inside(mouseX, mouseY, x, y + 145, 370, 18)) dragging = "green";
+            else if (inside(mouseX, mouseY, x, y + 188, 370, 18)) dragging = "blue";
+            else if (inside(mouseX, mouseY, x, y + 231, 370, 18)) dragging = "alpha";
         } else if (tab == Tab.SETTINGS && inside(mouseX, mouseY, x, y + 58, 112, 24)) HitboxConfig.save();
 
         if (dragging != null) updateSlider(mouseX);
