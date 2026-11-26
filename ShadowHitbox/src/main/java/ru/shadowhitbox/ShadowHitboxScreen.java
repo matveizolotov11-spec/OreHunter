@@ -40,7 +40,7 @@ public final class ShadowHitboxScreen extends Screen {
         if (tab == Tab.COMBAT) {
             drawToggle(g, x, y, "Aim Assist", HitboxConfig.aimAssistEnabled);
             drawToggle(g, x, y + 38, "Trigger Bot", HitboxConfig.triggerBotEnabled);
-            drawToggle(g, x, y + 76, "Critical hits only", HitboxConfig.criticalOnly);
+            g.drawString(font, "Trigger Bot mode: critical hits only", x, y + 81, 0xFF75D7A0, false);
             drawSlider(g, x, y + 118, "Combat Range", HitboxConfig.combatRange, 2.5f, 6.0f);
             drawSlider(g, x, y + 164, "Aim FOV", HitboxConfig.aimFov, 5.0f, 180.0f);
             drawSlider(g, x, y + 210, "Aim Smoothness", HitboxConfig.aimSmoothness, 1.0f, 20.0f);
@@ -109,7 +109,6 @@ public final class ShadowHitboxScreen extends Screen {
         else if (tab == Tab.COMBAT) {
             if (inside(mx, my, x + 310, y, 60, 24)) HitboxConfig.aimAssistEnabled = !HitboxConfig.aimAssistEnabled;
             else if (inside(mx, my, x + 310, y + 38, 60, 24)) HitboxConfig.triggerBotEnabled = !HitboxConfig.triggerBotEnabled;
-            else if (inside(mx, my, x + 310, y + 76, 60, 24)) HitboxConfig.criticalOnly = !HitboxConfig.criticalOnly;
             else if (inside(mx, my, x, y + 114, 370, 22)) dragging = "range";
             else if (inside(mx, my, x, y + 160, 370, 22)) dragging = "fov";
             else if (inside(mx, my, x, y + 206, 370, 22)) dragging = "smooth";
