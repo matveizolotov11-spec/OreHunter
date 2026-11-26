@@ -18,6 +18,7 @@ public final class HitboxConfig {
     public static boolean showSelf = false;
     public static boolean aimAssistEnabled = false;
     public static boolean triggerBotEnabled = false;
+    public static boolean autoStunSlamEnabled = false;
     public static boolean criticalOnly = true;
     public static float width = 0.90f;
     public static float height = 2.10f;
@@ -41,6 +42,7 @@ public final class HitboxConfig {
                     showSelf = data.showSelf;
                     aimAssistEnabled = data.aimAssistEnabled;
                     triggerBotEnabled = data.triggerBotEnabled;
+                    autoStunSlamEnabled = data.autoStunSlamEnabled;
                     criticalOnly = data.criticalOnly;
                     width = clamp(data.width, 0.6f, 2.5f);
                     height = clamp(data.height, 1.0f, 3.5f);
@@ -69,6 +71,7 @@ public final class HitboxConfig {
             data.showSelf = showSelf;
             data.aimAssistEnabled = aimAssistEnabled;
             data.triggerBotEnabled = triggerBotEnabled;
+            data.autoStunSlamEnabled = autoStunSlamEnabled;
             data.criticalOnly = criticalOnly;
             data.width = width;
             data.height = height;
@@ -95,6 +98,7 @@ public final class HitboxConfig {
         boolean showSelf;
         boolean aimAssistEnabled;
         boolean triggerBotEnabled;
+        boolean autoStunSlamEnabled;
         boolean criticalOnly = true;
         float width = 0.90f;
         float height = 2.10f;
@@ -105,7 +109,6 @@ public final class HitboxConfig {
         float combatRange = 4.0f;
         float aimFov = 45.0f;
         float aimSpeed = 0.85f;
-        // Kept for migration from older config files.
         float aimSmoothness = 8.0f;
     }
 }
