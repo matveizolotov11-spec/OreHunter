@@ -12,15 +12,56 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import net.minecraft.client.world.ClientWorld;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public final class MaceDetector {
     private static final String[] EXPLOSIVE_KEYWORDS = {
             "взрыв", "explosive", "tnt", "динамит", "детонатор"
     };
 
+    private static final Map<UUID, MaceType> SEEN_MACES = new HashMap<>();
+    private static ClientWorld trackedWorld;
+
     private MaceDetector() {
+    }
+
+    /**
+     * Remembers mace equipment as soon as the client receives it.
+     * The record is kept for the current loaded world/session.
+     */
+    public static void tick(MinecraftClient client) {
+        if (client.world == null) {
+            SEEN_MACES.clear();
+            trackedWorld = null;
+            return;
+        }
+
+        if (trackedWorld != client.world) {
+            SEEN_MACES.clear();
+            trackedWorld = client.world;
+        }
+
+        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
+            rememberHeldMace(player);
+        }
+    }
+
+    private static void rememberHeldMace(AbstractClientPlayerEntity player) {
+        MaceType mainHand = checkStack(player.getMainHandStack());
+        MaceType offHand = checkStack(player.getOffHandStack());
+        MaceType found = mainHand == MaceType.EXPLOSIVE || offHand == MaceType.EXPLOSIVE
+                ? MaceType.EXPLOSIVE
+                : mainHand != MaceType.NONE ? mainHand : offHand;
+
+        if (found != MaceType.NONE) {
+            SEEN_MACES.put(player.getUuid(), found);
+        }
     }
 
     public enum MaceType {
@@ -34,19 +75,10 @@ public final class MaceDetector {
             return MaceType.NONE;
         }
 
-        // Search the whole inventory, not only the held item.
-        var inventory = player.getInventory();
-        for (int slot = 0; slot < inventory.size(); slot++) {
-            MaceType type = checkStack(inventory.getStack(slot));
-            if (type == MaceType.EXPLOSIVE) {
-                return MaceType.EXPLOSIVE;
-            }
-            if (type == MaceType.NORMAL) {
-                return MaceType.NORMAL;
-            }
-        }
-
-        return checkStack(player.getOffHandStack());
+        // First catch the currently visible equipment, then use the
+        // remembered result even after the player switches items.
+        rememberHeldMace(player);
+        return SEEN_MACES.getOrDefault(player.getUuid(), MaceType.NONE);
     }
 
     private static MaceType checkStack(ItemStack stack) {
