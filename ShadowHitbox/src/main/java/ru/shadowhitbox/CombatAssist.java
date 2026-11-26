@@ -52,10 +52,12 @@ public final class CombatAssist {
                 && hit.getEntity() instanceof Player target && isValidTarget(client, player, target)
                 && player.distanceTo(target) <= HitboxConfig.combatRange
                 && player.hasLineOfSight(target)
-                && canCriticalHit(player)
+                && (!HitboxConfig.criticalOnly || canCriticalHit(player))
                 && player.getAttackStrengthScale(0.5F) >= 0.99F) {
             queueVanillaAttack(client);
-            triggerCooldown = 8;
+            // Short debounce prevents duplicate queued clicks; vanilla attack cooldown
+            // remains the real rate limiter, so attacks happen as soon as fully charged.
+            triggerCooldown = 2;
         }
     }
 
@@ -174,8 +176,6 @@ public final class CombatAssist {
     }
 
     private static UUID aimTarget;
-    private static float aimYawVelocity;
-    private static float aimPitchVelocity;
 
     private static Player findTarget(Minecraft client, Player player) {
         // Keep the current target briefly to prevent aim flicker when players overlap.
@@ -215,10 +215,6 @@ public final class CombatAssist {
         }
 
         UUID nextTarget = best == null ? null : best.getUUID();
-        if (nextTarget == null || !nextTarget.equals(aimTarget)) {
-            aimYawVelocity = 0.0F;
-            aimPitchVelocity = 0.0F;
-        }
         aimTarget = nextTarget;
         return best;
     }
@@ -250,28 +246,22 @@ public final class CombatAssist {
         float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
 
         float yawDifference = net.minecraft.util.Mth.wrapDegrees(targetYaw - player.getYRot());
-        float pitchDifference = net.minecraft.util.Mth.wrapDegrees(targetPitch - player.getXRot());
+        float pitchDifference = targetPitch - player.getXRot();
 
-        // Accelerate toward the target, then ease the angular velocity as the crosshair
-        // approaches center. This is frame/tick independent and avoids hard snap caps.
+        // Ease toward the torso with a bounded step. The step shrinks with the
+        // remaining angle, avoiding the old velocity overshoot and micro-jitter.
         float speed = HitboxConfig.aimSpeed;
-        float response = net.minecraft.util.Mth.clamp(0.24F + speed * 0.18F, 0.26F, 0.52F);
-        float maxSpeed = 8.0F + speed * 14.0F;
-        float desiredYawVelocity = net.minecraft.util.Mth.clamp(yawDifference * 0.48F,
-                -maxSpeed, maxSpeed);
-        float desiredPitchVelocity = net.minecraft.util.Mth.clamp(pitchDifference * 0.48F,
-                -maxSpeed * 0.72F, maxSpeed * 0.72F);
+        float response = net.minecraft.util.Mth.clamp(0.12F + speed * 0.16F, 0.14F, 0.38F);
+        float maxYawStep = 1.8F + speed * 5.0F;
+        float maxPitchStep = maxYawStep * 0.72F;
 
-        aimYawVelocity += (desiredYawVelocity - aimYawVelocity) * response;
-        aimPitchVelocity += (desiredPitchVelocity - aimPitchVelocity) * response;
+        float yawStep = net.minecraft.util.Mth.clamp(yawDifference * response,
+                -maxYawStep, maxYawStep);
+        float pitchStep = net.minecraft.util.Mth.clamp(pitchDifference * response,
+                -maxPitchStep, maxPitchStep);
 
-        float yawStep = Math.copySign(Math.min(Math.abs(yawDifference),
-                Math.abs(aimYawVelocity)), yawDifference);
-        float pitchStep = Math.copySign(Math.min(Math.abs(pitchDifference),
-                Math.abs(aimPitchVelocity)), pitchDifference);
-
-        if (Math.abs(yawDifference) < 0.08F) aimYawVelocity = 0.0F;
-        if (Math.abs(pitchDifference) < 0.08F) aimPitchVelocity = 0.0F;
+        if (Math.abs(yawDifference) < 0.035F) yawStep = yawDifference;
+        if (Math.abs(pitchDifference) < 0.035F) pitchStep = pitchDifference;
 
         player.setYRot(player.getYRot() + yawStep);
         player.setXRot(net.minecraft.util.Mth.clamp(player.getXRot() + pitchStep, -90.0F, 90.0F));
