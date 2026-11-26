@@ -133,6 +133,7 @@ public final class MaceDetector {
     }
 
     public static String formatHealth(float health) {
-        return String.format(Locale.US, "%.1f ❤", health);
+        int fullHearts = Math.max(0, Math.min(10, (int) Math.ceil(health / 2.0f)));
+        return "❤".repeat(fullHearts);
     }
 }
