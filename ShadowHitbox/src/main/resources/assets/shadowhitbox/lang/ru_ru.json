@@ -1,0 +1,8 @@
+{
+  "key.shadowhitbox.open": "Открыть меню ShadowHitbox",
+  "key.shadowhitbox.toggle_aim": "Переключить Aim Assist",
+  "key.shadowhitbox.toggle_trigger": "Переключить Trigger Bot",
+  "key.shadowhitbox.toggle_esp": "Переключить Hitbox ESP",
+  "key.shadowhitbox.toggle_expand": "Переключить расширенную рамку ESP",
+  "key.shadowhitbox.toggle_self": "Переключить отображение себя"
+}
