@@ -30,18 +30,14 @@ public abstract class EntityHitboxMixin {
         AABB box = cir.getReturnValue();
         if (box == null) return;
 
-        double cx = (box.minX + box.maxX) * 0.5;
-        double cz = (box.minZ + box.maxZ) * 0.5;
-        double halfX = (box.maxX - box.minX) * 0.5
+        // Expand only width along X; preserve vanilla depth (Z) and height (Y).
+        double centerX = (box.minX + box.maxX) * 0.5;
+        double halfWidth = (box.maxX - box.minX) * 0.5
                 * HitboxConfig.multiplier * HitboxConfig.widthMultiplier;
-        double halfZ = (box.maxZ - box.minZ) * 0.5
-                * HitboxConfig.multiplier * HitboxConfig.depthMultiplier;
-        double height = (box.maxY - box.minY)
-                * HitboxConfig.multiplier * HitboxConfig.heightMultiplier;
 
         cir.setReturnValue(new AABB(
-                cx - halfX, box.minY, cz - halfZ,
-                cx + halfX, box.minY + height, cz + halfZ
+                centerX - halfWidth, box.minY, box.minZ,
+                centerX + halfWidth, box.maxY, box.maxZ
         ));
     }
 }
