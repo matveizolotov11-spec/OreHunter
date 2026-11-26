@@ -5,8 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShapeRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -26,7 +26,7 @@ public final class HitboxRenderer {
         PoseStack matrices = context.matrices();
         Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
         matrices.pushPose();
-        VertexConsumer lines = context.consumers().getBuffer(RenderType.lines());
+        VertexConsumer lines = context.consumers().getBuffer(RenderTypes.LINES);
 
         for (Player player : minecraft.level.players()) {
             if (!player.isAlive() || (player == minecraft.player && !HitboxConfig.showSelf)) continue;
@@ -41,7 +41,7 @@ public final class HitboxRenderer {
             }
 
             AABB relative = box.move(-camera.x, -camera.y, -camera.z);
-            LevelRenderer.renderLineBox(matrices, lines, relative,
+            ShapeRenderer.renderLineBox(matrices.last(), lines, relative,
                     HitboxConfig.red, HitboxConfig.green, HitboxConfig.blue, HitboxConfig.alpha);
         }
 
