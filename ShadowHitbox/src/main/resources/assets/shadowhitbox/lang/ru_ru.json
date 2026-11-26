@@ -4,5 +4,6 @@
   "key.shadowhitbox.toggle_trigger": "Переключить Trigger Bot",
   "key.shadowhitbox.toggle_esp": "Переключить Hitbox ESP",
   "key.shadowhitbox.toggle_expand": "Переключить расширенную рамку ESP",
-  "key.shadowhitbox.toggle_self": "Переключить отображение себя"
+  "key.shadowhitbox.toggle_self": "Переключить отображение себя",
+  "key.shadowhitbox.toggle_stun_slam": "Переключить Auto Stun Slam"
 }
