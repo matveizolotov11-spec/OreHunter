@@ -43,7 +43,8 @@ public final class ShadowHitboxScreen extends Screen {
             g.drawString(font, "Trigger Bot mode: critical hits only", x, y + 81, 0xFF75D7A0, false);
             drawSlider(g, x, y + 118, "Combat Range", HitboxConfig.combatRange, 2.5f, 6.0f);
             drawSlider(g, x, y + 164, "Aim FOV", HitboxConfig.aimFov, 5.0f, 180.0f);
-            drawSlider(g, x, y + 210, "Aim Smoothness", HitboxConfig.aimSmoothness, 1.0f, 20.0f);
+            drawSlider(g, x, y + 210, "Aim Speed", HitboxConfig.aimSpeed, 0.15f, 1.5f);
+            g.drawString(font, "Fast, eased rotation — no instant snapping", x, y + 254, 0xFF75D7A0, false);
             g.drawString(font, "Настройки применяются в мультиплеере.", x, bottom - 34, 0xFF75D7A0, false);
             g.drawString(font, "Клиент не меняет серверную регистрацию попаданий.", x, bottom - 22, 0xFF9AA4B5, false);
         } else if (tab == Tab.VISUALS) {
@@ -61,8 +62,14 @@ public final class ShadowHitboxScreen extends Screen {
             g.drawString(font, "Config: config/shadowhitbox.json", x, y + 24, 0xFF8D96A8, false);
             g.fill(x, y + 58, x + 112, y + 82, 0xFF293344);
             g.drawCenteredString(font, "Save now", x + 56, y + 66, 0xFFFFFFFF);
-            g.drawString(font, "Target profile: AstrumMC", x, y + 106, 0xFF54C9FF, false);
-            g.drawString(font, "Right Shift opens this menu.", x, y + 130, 0xFF9AA4B5, false);
+            g.drawString(font, "KEYBINDS — change in Options > Controls", x, y + 106, 0xFF54C9FF, false);
+            g.drawString(font, "Right Shift  — Open menu", x, y + 132, 0xFFD5D9E4, false);
+            g.drawString(font, "G  — Aim Assist", x, y + 154, 0xFFD5D9E4, false);
+            g.drawString(font, "H  — Trigger Bot", x, y + 176, 0xFFD5D9E4, false);
+            g.drawString(font, "J  — Hitbox ESP", x, y + 198, 0xFFD5D9E4, false);
+            g.drawString(font, "K  — Expand ESP frame", x, y + 220, 0xFFD5D9E4, false);
+            g.drawString(font, "L  — Show Self", x, y + 242, 0xFFD5D9E4, false);
+            g.drawString(font, "Target profile: AstrumMC", x, y + 286, 0xFF54C9FF, false);
         }
 
         g.drawString(font, "Right Shift  •  ESC to close", left + 18, bottom - 18, 0xFF778195, false);
@@ -83,7 +90,7 @@ public final class ShadowHitboxScreen extends Screen {
 
     private void drawSlider(GuiGraphics g, int x, int y, String label, float value, float min, float max) {
         g.drawString(font, label, x, y, 0xFFE6EAF2, false);
-        g.drawString(font, String.format(java.util.Locale.ROOT, "%.1f", value),
+        g.drawString(font, String.format(java.util.Locale.ROOT, "%.2f", value),
                 x + 334, y, 0xFF54C9FF, false);
         int sy = y + 20;
         g.fill(x, sy, x + 370, sy + 5, 0xFF303847);
@@ -111,7 +118,7 @@ public final class ShadowHitboxScreen extends Screen {
             else if (inside(mx, my, x + 310, y + 38, 60, 24)) HitboxConfig.triggerBotEnabled = !HitboxConfig.triggerBotEnabled;
             else if (inside(mx, my, x, y + 114, 370, 22)) dragging = "range";
             else if (inside(mx, my, x, y + 160, 370, 22)) dragging = "fov";
-            else if (inside(mx, my, x, y + 206, 370, 22)) dragging = "smooth";
+            else if (inside(mx, my, x, y + 206, 370, 22)) dragging = "speed";
         } else if (tab == Tab.VISUALS) {
             if (inside(mx, my, x + 310, y, 60, 24)) HitboxConfig.espEnabled = !HitboxConfig.espEnabled;
             else if (inside(mx, my, x + 310, y + 38, 60, 24)) HitboxConfig.expandEnabled = !HitboxConfig.expandEnabled;
@@ -156,7 +163,7 @@ public final class ShadowHitboxScreen extends Screen {
         switch (dragging) {
             case "range" -> HitboxConfig.combatRange = 2.5f + t * 3.5f;
             case "fov" -> HitboxConfig.aimFov = 5.0f + t * 175.0f;
-            case "smooth" -> HitboxConfig.aimSmoothness = 1.0f + t * 19.0f;
+            case "speed" -> HitboxConfig.aimSpeed = 0.15f + t * 1.35f;
             case "width" -> HitboxConfig.width = 0.6f + t * 1.9f;
             case "height" -> HitboxConfig.height = 1.0f + t * 2.5f;
             case "red" -> HitboxConfig.red = t;
