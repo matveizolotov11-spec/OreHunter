@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "hitboxexpander",
+  "version": "${version}",
+  "name": "Hitbox Expander",
+  "description": "Client-side entity hitbox expansion controls for Minecraft 1.21.11.",
+  "authors": ["HitboxExpander"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["ru.hitboxexpander.HitboxExpanderClient"]
+  },
+  "mixins": ["hitboxexpander.client.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": ">=0.141.6"
+  }
+}
