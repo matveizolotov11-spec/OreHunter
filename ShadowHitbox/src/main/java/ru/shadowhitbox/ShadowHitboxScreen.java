@@ -42,9 +42,8 @@ public final class ShadowHitboxScreen extends Screen {
             drawToggle(g, x, y, "Hitbox Expand", HitboxConfig.expandEnabled); y += 43;
             drawSlider(g, x, y, "Hitbox Width", HitboxConfig.width, 0.6f, 2.5f, "width"); y += 52;
             drawSlider(g, x, y, "Hitbox Height", HitboxConfig.height, 1.0f, 3.5f, "height");
-            if (!minecraft.hasSingleplayerServer()) {
-                g.drawString(font, "Размеры применяются только в одиночном мире.", x, bottom - 34, 0xFFFFC56B, false);
-            }
+            g.drawString(font, "Размеры рамки ESP работают и в мультиплеере.", x, bottom - 34, 0xFF75D7A0, false);
+            g.drawString(font, "Это визуализация, серверные хитбоксы не меняются.", x, bottom - 22, 0xFF9AA4B5, false);
         } else if (tab == Tab.VISUALS) {
             drawToggle(g, x, y, "Hitbox ESP", HitboxConfig.espEnabled); y += 43;
             drawToggle(g, x, y, "Show Self", HitboxConfig.showSelf); y += 43;
