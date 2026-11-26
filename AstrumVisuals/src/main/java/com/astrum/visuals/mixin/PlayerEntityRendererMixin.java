@@ -8,7 +8,8 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.render.state.CameraRenderState;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(PlayerEntityRenderer.class)
+@Mixin(EntityRenderer.class)
 public abstract class PlayerEntityRendererMixin {
     @Unique
     private AbstractClientPlayerEntity astrum$getPlayer(PlayerEntityRenderState state) {
@@ -39,15 +40,20 @@ public abstract class PlayerEntityRendererMixin {
         return null;
     }
 
-    @Inject(method = "renderLabelIfPresent", at = @At("TAIL"))
+    /**
+     * Render indicators from the main entity render pass, not the name-tag pass.
+     * This keeps HP visible even when a server/team hides player name tags.
+     */
+    @Inject(method = "render", at = @At("TAIL"))
     private void astrum$renderIndicators(
-            PlayerEntityRenderState state,
+            EntityRenderState renderState,
             MatrixStack matrices,
             OrderedRenderCommandQueue queue,
             CameraRenderState cameraState,
             CallbackInfo ci
     ) {
-        if (!AstrumVisualsClient.canRender() || state.invisible) {
+        if (!(renderState instanceof PlayerEntityRenderState state)
+                || !AstrumVisualsClient.canRender() || state.invisible) {
             return;
         }
 
