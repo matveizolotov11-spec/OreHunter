@@ -40,7 +40,7 @@ public final class ShadowHitboxScreen extends Screen {
         if (tab == Tab.COMBAT) {
             drawToggle(g, x, y, "Aim Assist", HitboxConfig.aimAssistEnabled);
             drawToggle(g, x, y + 38, "Trigger Bot", HitboxConfig.triggerBotEnabled);
-            g.drawString(font, "Trigger Bot mode: critical hits only", x, y + 81, 0xFF75D7A0, false);
+            drawToggle(g, x, y + 76, "Auto Stun Slam", HitboxConfig.autoStunSlamEnabled);
             drawSlider(g, x, y + 118, "Combat Range", HitboxConfig.combatRange, 2.5f, 6.0f);
             drawSlider(g, x, y + 164, "Aim FOV", HitboxConfig.aimFov, 5.0f, 180.0f);
             drawSlider(g, x, y + 210, "Aim Speed", HitboxConfig.aimSpeed, 0.15f, 1.5f);
@@ -66,6 +66,7 @@ public final class ShadowHitboxScreen extends Screen {
             g.drawString(font, "Right Shift  — Open menu", x, y + 132, 0xFFD5D9E4, false);
             g.drawString(font, "G  — Aim Assist", x, y + 154, 0xFFD5D9E4, false);
             g.drawString(font, "H  — Trigger Bot", x, y + 176, 0xFFD5D9E4, false);
+            g.drawString(font, "N  — Auto Stun Slam", x, y + 198, 0xFFD5D9E4, false);
             g.drawString(font, "J  — Hitbox ESP", x, y + 198, 0xFFD5D9E4, false);
             g.drawString(font, "K  — Expand ESP frame", x, y + 220, 0xFFD5D9E4, false);
             g.drawString(font, "L  — Show Self", x, y + 242, 0xFFD5D9E4, false);
@@ -116,6 +117,7 @@ public final class ShadowHitboxScreen extends Screen {
         else if (tab == Tab.COMBAT) {
             if (inside(mx, my, x + 310, y, 60, 24)) HitboxConfig.aimAssistEnabled = !HitboxConfig.aimAssistEnabled;
             else if (inside(mx, my, x + 310, y + 38, 60, 24)) HitboxConfig.triggerBotEnabled = !HitboxConfig.triggerBotEnabled;
+            else if (inside(mx, my, x + 310, y + 76, 60, 24)) HitboxConfig.autoStunSlamEnabled = !HitboxConfig.autoStunSlamEnabled;
             else if (inside(mx, my, x, y + 114, 370, 22)) dragging = "range";
             else if (inside(mx, my, x, y + 160, 370, 22)) dragging = "fov";
             else if (inside(mx, my, x, y + 206, 370, 22)) dragging = "speed";
