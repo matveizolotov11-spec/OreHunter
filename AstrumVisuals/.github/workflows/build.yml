@@ -1,0 +1,43 @@
+name: Build AstrumVisuals
+
+on:
+  push:
+    paths:
+      - "AstrumVisuals/**"
+      - ".github/workflows/astrumvisuals-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: AstrumVisuals
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Build mod
+        run: gradle build
+
+      - name: Upload mod JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: AstrumVisuals-1.0.0
+          path: AstrumVisuals/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
