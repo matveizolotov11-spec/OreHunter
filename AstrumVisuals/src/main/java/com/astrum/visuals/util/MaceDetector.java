@@ -34,9 +34,16 @@ public final class MaceDetector {
             return MaceType.NONE;
         }
 
-        MaceType mainHand = checkStack(player.getMainHandStack());
-        if (mainHand != MaceType.NONE) {
-            return mainHand;
+        // Search the whole inventory, not only the held item.
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            MaceType type = checkStack(inventory.getStack(slot));
+            if (type == MaceType.EXPLOSIVE) {
+                return MaceType.EXPLOSIVE;
+            }
+            if (type == MaceType.NORMAL) {
+                return MaceType.NORMAL;
+            }
         }
 
         return checkStack(player.getOffHandStack());
