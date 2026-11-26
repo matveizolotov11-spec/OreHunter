@@ -16,6 +16,7 @@ public final class ShadowHitboxClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         HitboxConfig.load();
+        HitboxRenderer.register();
         openMenu = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.shadowhitbox.open",
                 InputConstants.Type.KEYSYM,
