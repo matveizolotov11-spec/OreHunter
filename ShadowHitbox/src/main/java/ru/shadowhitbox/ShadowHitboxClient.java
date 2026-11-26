@@ -27,6 +27,7 @@ public final class ShadowHitboxClient implements ClientModInitializer {
             while (openMenu.consumeClick()) {
                 if (client.screen == null) client.setScreen(new ShadowHitboxScreen());
             }
+            CombatAssist.tick(client);
         });
     }
 
