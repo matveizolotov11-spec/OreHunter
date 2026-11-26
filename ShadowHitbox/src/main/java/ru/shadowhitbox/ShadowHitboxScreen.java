@@ -10,7 +10,7 @@ public final class ShadowHitboxScreen extends Screen {
     private Tab tab = Tab.COMBAT;
     private String dragging = null;
     private final int panelWidth = 430;
-    private final int panelHeight = 430;
+    private final int panelHeight = 500;
 
     public ShadowHitboxScreen() {
         super(Component.literal("ShadowHitbox PvP"));
