@@ -24,7 +24,7 @@ public final class HitboxRenderer {
 
         PoseStack matrices = context.matrices();
         PoseStack.Pose pose = matrices.last();
-        Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
+        Vec3 camera = minecraft.gameRenderer.getMainCamera().position();
         VertexConsumer lines = context.consumers().getBuffer(RenderTypes.LINES);
 
         for (Player player : minecraft.level.players()) {
