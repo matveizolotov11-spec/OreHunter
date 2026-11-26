@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "ru.hitboxexpander.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["EntityHitboxMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
