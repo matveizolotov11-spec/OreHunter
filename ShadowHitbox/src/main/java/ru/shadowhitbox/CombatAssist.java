@@ -76,7 +76,7 @@ public final class CombatAssist {
             axeSlot = axe;
             maceSlot = mace;
             slamTarget = target.getUUID();
-            player.getInventory().selected = axeSlot;
+            player.getInventory().setSelectedSlot(axeSlot);
             slamState = SlamState.PREPARE_AXE;
             stateTicks = 0;
             ShadowHitboxClient.notify("Stun Slam: топор выбран");
@@ -94,7 +94,7 @@ public final class CombatAssist {
         switch (slamState) {
             case PREPARE_AXE -> {
                 if (stateTicks >= 1 && player.getAttackStrengthScale(0.5F) >= 0.95F) {
-                    player.getInventory().selected = axeSlot;
+                    player.getInventory().setSelectedSlot(axeSlot);
                     queueVanillaAttack(client);
                     slamState = SlamState.WAIT_FOR_SHIELD;
                     stateTicks = 0;
@@ -103,7 +103,7 @@ public final class CombatAssist {
             }
             case WAIT_FOR_SHIELD -> {
                 if (!target.isBlocking()) {
-                    player.getInventory().selected = maceSlot;
+                    player.getInventory().setSelectedSlot(maceSlot);
                     slamState = SlamState.WAIT_FOR_CRIT;
                     stateTicks = 0;
                     ShadowHitboxClient.notify("Stun Slam: щит сбит, булава выбрана");
@@ -112,7 +112,7 @@ public final class CombatAssist {
                 }
             }
             case WAIT_FOR_CRIT -> {
-                player.getInventory().selected = maceSlot;
+                player.getInventory().setSelectedSlot(maceSlot);
                 if (client.hitResult instanceof EntityHitResult hit && hit.getEntity() == target
                         && player.hasLineOfSight(target)
                         && canCriticalHit(player)
@@ -156,14 +156,14 @@ public final class CombatAssist {
 
     private static int findMace(Player player) {
         for (int i = 0; i < 9; i++) {
-            if (player.getInventory().items.get(i).is(Items.MACE)) return i;
+            if (player.getInventory().getItem(i).is(Items.MACE)) return i;
         }
         return -1;
     }
 
     private static void resetSlam(Minecraft client) {
         if (client.player != null && previousSlot >= 0 && previousSlot < 9) {
-            client.player.getInventory().selected = previousSlot;
+            client.player.getInventory().setSelectedSlot(previousSlot);
         }
         slamState = SlamState.IDLE;
         slamTarget = null;
