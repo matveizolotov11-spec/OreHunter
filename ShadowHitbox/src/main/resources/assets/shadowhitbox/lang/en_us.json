@@ -4,5 +4,6 @@
   "key.shadowhitbox.toggle_trigger": "Toggle Trigger Bot",
   "key.shadowhitbox.toggle_esp": "Toggle Hitbox ESP",
   "key.shadowhitbox.toggle_expand": "Toggle expanded ESP frame",
-  "key.shadowhitbox.toggle_self": "Toggle Show Self"
+  "key.shadowhitbox.toggle_self": "Toggle Show Self",
+  "key.shadowhitbox.toggle_stun_slam": "Toggle Auto Stun Slam"
 }
