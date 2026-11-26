@@ -24,7 +24,8 @@ public final class CombatAssist {
         if (HitboxConfig.triggerBotEnabled && client.hitResult instanceof EntityHitResult hit
                 && hit.getEntity() instanceof Player target && isValidTarget(client, player, target)
                 && player.distanceTo(target) <= HitboxConfig.combatRange
-                && (!HitboxConfig.criticalOnly || canCriticalHit(player))
+                && player.hasLineOfSight(target)
+                && canCriticalHit(player)
                 && player.getAttackStrengthScale(0.5F) >= 0.99F) {
             client.gameMode.attack(player, target);
             player.swing(InteractionHand.MAIN_HAND);
@@ -77,7 +78,7 @@ public final class CombatAssist {
                 && player.fallDistance > 0.0F
                 && !player.isInWater()
                 && !player.isInLava()
-                && !player.isClimbing()
+                && !player.onClimbable()
                 && !player.isPassenger()
                 && !player.isSprinting()
                 && !player.isFallFlying()
