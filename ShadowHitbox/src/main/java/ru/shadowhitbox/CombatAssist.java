@@ -173,7 +173,26 @@ public final class CombatAssist {
         stateTicks = 0;
     }
 
+    private static UUID aimTarget;
+    private static float aimYawVelocity;
+    private static float aimPitchVelocity;
+
     private static Player findTarget(Minecraft client, Player player) {
+        // Keep the current target briefly to prevent aim flicker when players overlap.
+        Player locked = findPlayer(client, aimTarget);
+        if (locked != null && isValidTarget(client, player, locked)
+                && player.distanceTo(locked) <= HitboxConfig.combatRange
+                && player.hasLineOfSight(locked)) {
+            Vec3 lockedPoint = aimPoint(locked).subtract(player.getEyePosition());
+            float yaw = (float) (Math.toDegrees(Math.atan2(lockedPoint.z, lockedPoint.x)) - 90.0);
+            float pitch = (float) -Math.toDegrees(Math.atan2(lockedPoint.y,
+                    Math.sqrt(lockedPoint.x * lockedPoint.x + lockedPoint.z * lockedPoint.z)));
+            float yawDiff = net.minecraft.util.Mth.wrapDegrees(yaw - player.getYRot());
+            float pitchDiff = net.minecraft.util.Mth.wrapDegrees(pitch - player.getXRot());
+            float angle = (float) Math.hypot(yawDiff, pitchDiff);
+            if (angle <= HitboxConfig.aimFov + 8.0F) return locked;
+        }
+
         Player best = null;
         float bestAngle = Float.MAX_VALUE;
         for (Player candidate : client.level.players()) {
@@ -181,20 +200,42 @@ public final class CombatAssist {
                     || player.distanceTo(candidate) > HitboxConfig.combatRange
                     || !player.hasLineOfSight(candidate)) continue;
 
-            Vec3 delta = candidate.getBoundingBox().getCenter().subtract(player.getEyePosition());
+            Vec3 delta = aimPoint(candidate).subtract(player.getEyePosition());
             double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
             float targetYaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
             float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
             float yawDifference = net.minecraft.util.Mth.wrapDegrees(targetYaw - player.getYRot());
             float pitchDifference = net.minecraft.util.Mth.wrapDegrees(targetPitch - player.getXRot());
-            float angle = (float) Math.sqrt(yawDifference * yawDifference + pitchDifference * pitchDifference);
+            float angle = (float) Math.hypot(yawDifference, pitchDifference);
 
             if (angle <= HitboxConfig.aimFov && angle < bestAngle) {
                 bestAngle = angle;
                 best = candidate;
             }
         }
+
+        UUID nextTarget = best == null ? null : best.getUUID();
+        if (nextTarget == null || !nextTarget.equals(aimTarget)) {
+            aimYawVelocity = 0.0F;
+            aimPitchVelocity = 0.0F;
+        }
+        aimTarget = nextTarget;
         return best;
+    }
+
+    private static Player findPlayer(Minecraft client, UUID uuid) {
+        if (uuid == null || client.level == null) return null;
+        for (Player candidate : client.level.players()) {
+            if (uuid.equals(candidate.getUUID())) return candidate;
+        }
+        return null;
+    }
+
+    // Aim at the center mass of the torso, not the head or feet.
+    private static Vec3 aimPoint(Player target) {
+        return new Vec3(target.getX(),
+                target.getY() + target.getBbHeight() * 0.55,
+                target.getZ());
     }
 
     private static boolean isValidTarget(Minecraft client, Player player, Player target) {
@@ -203,16 +244,35 @@ public final class CombatAssist {
     }
 
     private static void applyAim(Player player, Player target) {
-        Vec3 delta = target.getBoundingBox().getCenter().subtract(player.getEyePosition());
+        Vec3 delta = aimPoint(target).subtract(player.getEyePosition());
         double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
         float targetYaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
         float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
 
         float yawDifference = net.minecraft.util.Mth.wrapDegrees(targetYaw - player.getYRot());
         float pitchDifference = net.minecraft.util.Mth.wrapDegrees(targetPitch - player.getXRot());
-        float factor = 1.0F - (float) Math.exp(-HitboxConfig.aimSpeed * 0.38F);
-        float yawStep = net.minecraft.util.Mth.clamp(yawDifference * factor, -22.0F, 22.0F);
-        float pitchStep = net.minecraft.util.Mth.clamp(pitchDifference * factor, -16.0F, 16.0F);
+
+        // Accelerate toward the target, then ease the angular velocity as the crosshair
+        // approaches center. This is frame/tick independent and avoids hard snap caps.
+        float speed = HitboxConfig.aimSpeed;
+        float response = net.minecraft.util.Mth.clamp(0.24F + speed * 0.18F, 0.26F, 0.52F);
+        float maxSpeed = 8.0F + speed * 14.0F;
+        float desiredYawVelocity = net.minecraft.util.Mth.clamp(yawDifference * 0.48F,
+                -maxSpeed, maxSpeed);
+        float desiredPitchVelocity = net.minecraft.util.Mth.clamp(pitchDifference * 0.48F,
+                -maxSpeed * 0.72F, maxSpeed * 0.72F);
+
+        aimYawVelocity += (desiredYawVelocity - aimYawVelocity) * response;
+        aimPitchVelocity += (desiredPitchVelocity - aimPitchVelocity) * response;
+
+        float yawStep = Math.copySign(Math.min(Math.abs(yawDifference),
+                Math.abs(aimYawVelocity)), yawDifference);
+        float pitchStep = Math.copySign(Math.min(Math.abs(pitchDifference),
+                Math.abs(aimPitchVelocity)), pitchDifference);
+
+        if (Math.abs(yawDifference) < 0.08F) aimYawVelocity = 0.0F;
+        if (Math.abs(pitchDifference) < 0.08F) aimPitchVelocity = 0.0F;
+
         player.setYRot(player.getYRot() + yawStep);
         player.setXRot(net.minecraft.util.Mth.clamp(player.getXRot() + pitchStep, -90.0F, 90.0F));
     }
