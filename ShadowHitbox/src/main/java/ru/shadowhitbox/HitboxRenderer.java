@@ -64,7 +64,21 @@ public final class HitboxRenderer {
     private static void line(VertexConsumer out, PoseStack.Pose pose,
                              double x0, double y0, double z0, double x1, double y1, double z1,
                              float red, float green, float blue, float alpha) {
-        out.addVertex(pose, (float)x0, (float)y0, (float)z0).setColor(red, green, blue, alpha);
-        out.addVertex(pose, (float)x1, (float)y1, (float)z1).setColor(red, green, blue, alpha);
+        float dx = (float) (x1 - x0);
+        float dy = (float) (y1 - y0);
+        float dz = (float) (z1 - z0);
+        float length = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        float nx = length > 1.0e-6f ? -dy / length : 0.0f;
+        float ny = length > 1.0e-6f ? dx / length : 1.0f;
+        float nz = 0.0f;
+
+        out.addVertex(pose, (float)x0, (float)y0, (float)z0)
+                .setColor(red, green, blue, alpha)
+                .setNormal(pose, nx, ny, nz)
+                .setLineWidth(1.0f);
+        out.addVertex(pose, (float)x1, (float)y1, (float)z1)
+                .setColor(red, green, blue, alpha)
+                .setNormal(pose, nx, ny, nz)
+                .setLineWidth(1.0f);
     }
 }
