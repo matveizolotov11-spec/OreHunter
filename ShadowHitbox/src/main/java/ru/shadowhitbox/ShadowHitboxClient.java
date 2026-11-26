@@ -13,6 +13,7 @@ public final class ShadowHitboxClient implements ClientModInitializer {
     private static KeyMapping openMenu;
     private static KeyMapping toggleAim;
     private static KeyMapping toggleTrigger;
+    private static KeyMapping toggleStunSlam;
     private static KeyMapping toggleEsp;
     private static KeyMapping toggleExpand;
     private static KeyMapping toggleSelf;
@@ -25,6 +26,7 @@ public final class ShadowHitboxClient implements ClientModInitializer {
         openMenu = register("key.shadowhitbox.open", GLFW.GLFW_KEY_RIGHT_SHIFT);
         toggleAim = register("key.shadowhitbox.toggle_aim", GLFW.GLFW_KEY_G);
         toggleTrigger = register("key.shadowhitbox.toggle_trigger", GLFW.GLFW_KEY_H);
+        toggleStunSlam = register("key.shadowhitbox.toggle_stun_slam", GLFW.GLFW_KEY_N);
         toggleEsp = register("key.shadowhitbox.toggle_esp", GLFW.GLFW_KEY_J);
         toggleExpand = register("key.shadowhitbox.toggle_expand", GLFW.GLFW_KEY_K);
         toggleSelf = register("key.shadowhitbox.toggle_self", GLFW.GLFW_KEY_L);
@@ -40,6 +42,10 @@ public final class ShadowHitboxClient implements ClientModInitializer {
             while (toggleTrigger.consumeClick()) {
                 HitboxConfig.triggerBotEnabled = !HitboxConfig.triggerBotEnabled;
                 notifyToggle("Trigger Bot", HitboxConfig.triggerBotEnabled);
+            }
+            while (toggleStunSlam.consumeClick()) {
+                HitboxConfig.autoStunSlamEnabled = !HitboxConfig.autoStunSlamEnabled;
+                notifyToggle("Auto Stun Slam", HitboxConfig.autoStunSlamEnabled);
             }
             while (toggleEsp.consumeClick()) {
                 HitboxConfig.espEnabled = !HitboxConfig.espEnabled;
