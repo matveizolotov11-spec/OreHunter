@@ -74,7 +74,7 @@ public final class HitboxExpanderScreen extends Screen {
         else if (hit(mx, my, x + 18, y + 156, 336, 24)) dragging = "width";
         else if (hit(mx, my, x + 18, y + 204, 336, 24)) dragging = "depth";
         else if (hit(mx, my, x + 18, y + 252, 336, 24)) dragging = "height";
-        else if (hit(mx, my, x + 18, y + PANEL_H - 54, 86, 27)) {
+        else if (hit(mx, my, x + 18, y + PANEL_H - 54 - 58, 86, 27)) {
             HitboxConfig.reset();
             return true;
         } else return super.mouseClicked(click, doubled);
