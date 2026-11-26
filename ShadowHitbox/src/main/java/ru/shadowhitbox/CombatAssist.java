@@ -66,11 +66,18 @@ public final class CombatAssist {
         double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
         float targetYaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0);
         float targetPitch = (float) -Math.toDegrees(Math.atan2(delta.y, horizontal));
-        float factor = 1.0F / HitboxConfig.aimSmoothness;
-        float yaw = player.getYRot() + Mth.wrapDegrees(targetYaw - player.getYRot()) * factor;
-        float pitch = player.getXRot() + Mth.wrapDegrees(targetPitch - player.getXRot()) * factor;
-        player.setYRot(yaw);
-        player.setXRot(Mth.clamp(pitch, -90.0F, 90.0F));
+
+        float yawDifference = Mth.wrapDegrees(targetYaw - player.getYRot());
+        float pitchDifference = Mth.wrapDegrees(targetPitch - player.getXRot());
+
+        // Exponential easing gives quick acquisition without snapping the camera.
+        float speed = HitboxConfig.aimSpeed;
+        float factor = 1.0F - (float) Math.exp(-speed * 0.38F);
+        float yawStep = Mth.clamp(yawDifference * factor, -22.0F, 22.0F);
+        float pitchStep = Mth.clamp(pitchDifference * factor, -16.0F, 16.0F);
+
+        player.setYRot(player.getYRot() + yawStep);
+        player.setXRot(Mth.clamp(player.getXRot() + pitchStep, -90.0F, 90.0F));
     }
 
     private static boolean canCriticalHit(Player player) {
