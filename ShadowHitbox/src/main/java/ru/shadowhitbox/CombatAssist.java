@@ -72,7 +72,7 @@ public final class CombatAssist {
             int mace = findMace(player);
             if (axe < 0 || mace < 0) return;
 
-            previousSlot = player.getInventory().selected;
+            previousSlot = player.getInventory().getSelectedSlot();
             axeSlot = axe;
             maceSlot = mace;
             slamTarget = target.getUUID();
@@ -148,7 +148,7 @@ public final class CombatAssist {
 
     private static int findAxe(Player player) {
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = player.getInventory().items.get(i);
+            ItemStack stack = player.getInventory().getItem(i);
             if (stack.getItem() instanceof AxeItem) return i;
         }
         return -1;
