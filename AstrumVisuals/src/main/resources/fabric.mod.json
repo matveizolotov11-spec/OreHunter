@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "astrumvisuals",
+  "version": "${version}",
+  "name": "Astrum Visuals",
+  "description": "Client-side player health and mace indicators for Minecraft 1.21.11.",
+  "authors": ["AstrumVisuals"],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.astrum.visuals.AstrumVisualsClient"
+    ]
+  },
+  "mixins": [
+    "astrumvisuals.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
