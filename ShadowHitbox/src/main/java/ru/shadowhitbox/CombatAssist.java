@@ -251,8 +251,8 @@ public final class CombatAssist {
         // Ease toward the torso with a bounded step. The step shrinks with the
         // remaining angle, avoiding the old velocity overshoot and micro-jitter.
         float speed = HitboxConfig.aimSpeed;
-        float response = net.minecraft.util.Mth.clamp(0.12F + speed * 0.16F, 0.14F, 0.38F);
-        float maxYawStep = 1.8F + speed * 5.0F;
+        float response = net.minecraft.util.Mth.clamp(0.30F + speed * 0.22F, 0.34F, 0.62F);
+        float maxYawStep = 5.0F + speed * 11.0F;
         float maxPitchStep = maxYawStep * 0.72F;
 
         float yawStep = net.minecraft.util.Mth.clamp(yawDifference * response,
