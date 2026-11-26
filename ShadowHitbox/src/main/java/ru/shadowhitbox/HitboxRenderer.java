@@ -2,8 +2,8 @@ package ru.shadowhitbox;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
@@ -20,16 +20,15 @@ public final class HitboxRenderer {
 
     private static void render(WorldRenderContext context) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (!HitboxConfig.espEnabled || minecraft.player == null || context.world() == null
-                || context.matrixStack() == null || context.consumers() == null) return;
+        if (!HitboxConfig.espEnabled || minecraft.player == null || minecraft.level == null
+                || context.matrices() == null || context.consumers() == null) return;
 
-        PoseStack matrices = context.matrixStack();
-        Vec3 camera = context.camera().getPosition();
+        PoseStack matrices = context.matrices();
+        Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
         matrices.pushPose();
-        matrices.translate(-camera.x, -camera.y, -camera.z);
         VertexConsumer lines = context.consumers().getBuffer(RenderType.lines());
 
-        for (Player player : context.world().players()) {
+        for (Player player : minecraft.level.players()) {
             if (!player.isAlive() || (player == minecraft.player && !HitboxConfig.showSelf)) continue;
 
             AABB box = player.getBoundingBox();
@@ -41,7 +40,8 @@ public final class HitboxRenderer {
                         cx + half, box.minY + HitboxConfig.height, cz + half);
             }
 
-            LevelRenderer.renderLineBox(matrices, lines, box,
+            AABB relative = box.move(-camera.x, -camera.y, -camera.z);
+            LevelRenderer.renderLineBox(matrices, lines, relative,
                     HitboxConfig.red, HitboxConfig.green, HitboxConfig.blue, HitboxConfig.alpha);
         }
 
