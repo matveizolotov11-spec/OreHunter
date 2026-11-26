@@ -2,6 +2,7 @@ package com.astrum.visuals.util;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
@@ -12,13 +13,19 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public final class MaceDetector {
     private static final String[] EXPLOSIVE_KEYWORDS = {
             "взрыв", "explosive", "tnt", "динамит", "детонатор"
     };
+
+    private static final Map<UUID, MaceType> SEEN_MACES = new HashMap<>();
+    private static ClientWorld trackedWorld;
 
     private MaceDetector() {
     }
@@ -29,18 +36,46 @@ public final class MaceDetector {
         EXPLOSIVE
     }
 
+    /**
+     * Remember players after the client has actually seen a mace in either hand.
+     * The record lasts for the current loaded world, so switching hotbar slots
+     * does not make the indicator disappear.
+     */
+    public static void tick(MinecraftClient client) {
+        if (client.world == null) {
+            SEEN_MACES.clear();
+            trackedWorld = null;
+            return;
+        }
+
+        if (trackedWorld != client.world) {
+            SEEN_MACES.clear();
+            trackedWorld = client.world;
+        }
+
+        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
+            rememberHeldMace(player);
+        }
+    }
+
+    private static void rememberHeldMace(AbstractClientPlayerEntity player) {
+        MaceType mainHand = checkStack(player.getMainHandStack());
+        MaceType offHand = checkStack(player.getOffHandStack());
+        MaceType found = mainHand == MaceType.EXPLOSIVE || offHand == MaceType.EXPLOSIVE
+                ? MaceType.EXPLOSIVE
+                : mainHand != MaceType.NONE ? mainHand : offHand;
+
+        if (found != MaceType.NONE) {
+            SEEN_MACES.put(player.getUuid(), found);
+        }
+    }
+
     public static MaceType getPlayerMace(AbstractClientPlayerEntity player) {
         if (player == null) {
             return MaceType.NONE;
         }
-
-        // Show the mace only while the client currently sees it in either hand.
-        MaceType mainHand = checkStack(player.getMainHandStack());
-        MaceType offHand = checkStack(player.getOffHandStack());
-        if (mainHand == MaceType.EXPLOSIVE || offHand == MaceType.EXPLOSIVE) {
-            return MaceType.EXPLOSIVE;
-        }
-        return mainHand != MaceType.NONE ? mainHand : offHand;
+        rememberHeldMace(player);
+        return SEEN_MACES.getOrDefault(player.getUuid(), MaceType.NONE);
     }
 
     private static MaceType checkStack(ItemStack stack) {
