@@ -2,20 +2,14 @@
   "schemaVersion": 1,
   "id": "shadowhitbox",
   "version": "${version}",
-  "name": "ShadowHitbox",
-  "description": "Client-side hitbox visualization and singleplayer hitbox sizing controls.",
+  "name": "ShadowHitbox PvP",
+  "description": "Client-side PvP aiming assistance and hitbox visualization for Minecraft 1.21.11.",
   "authors": ["ShadowHitbox"],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
     "client": ["ru.shadowhitbox.ShadowHitboxClient"]
   },
-  "mixins": [
-    {
-      "config": "shadowhitbox.client.mixins.json",
-      "environment": "client"
-    }
-  ],
   "depends": {
     "fabricloader": ">=0.18.4",
     "minecraft": "1.21.11",
