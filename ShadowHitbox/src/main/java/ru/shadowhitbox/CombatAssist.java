@@ -95,12 +95,19 @@ public final class CombatAssist {
 
         switch (slamState) {
             case PREPARE_AXE -> {
-                if (stateTicks >= 1 && player.getAttackStrengthScale(0.5F) >= 0.95F) {
+                // Do not waste the axe hit if the crosshair moved off the locked target
+                // while the hotbar slot was changing.
+                boolean aimedAtTarget = client.hitResult instanceof EntityHitResult hit
+                        && hit.getEntity() == target;
+                if (aimedAtTarget && player.hasLineOfSight(target)
+                        && stateTicks >= 1 && player.getAttackStrengthScale(0.5F) >= 0.95F) {
                     player.getInventory().setSelectedSlot(axeSlot);
                     queueVanillaAttack(client);
                     slamState = SlamState.WAIT_FOR_SHIELD;
                     stateTicks = 0;
                     ShadowHitboxClient.notify("Stun Slam: удар топором");
+                } else if (stateTicks >= 20) {
+                    resetSlam(client);
                 }
             }
             case WAIT_FOR_SHIELD -> {
@@ -109,13 +116,15 @@ public final class CombatAssist {
                     slamState = SlamState.WAIT_FOR_CRIT;
                     stateTicks = 0;
                     ShadowHitboxClient.notify("Stun Slam: щит сбит, булава выбрана");
-                } else if (stateTicks >= 12) {
+                } else if (stateTicks >= 20) {
+                    // The shield did not register as disabled; restore the original slot.
                     resetSlam(client);
                 }
             }
             case WAIT_FOR_CRIT -> {
                 player.getInventory().setSelectedSlot(maceSlot);
                 if (client.hitResult instanceof EntityHitResult hit && hit.getEntity() == target
+                        && player.distanceTo(target) <= HitboxConfig.combatRange
                         && player.hasLineOfSight(target)
                         && canCriticalHit(player)
                         && player.getAttackStrengthScale(0.5F) >= 0.99F) {
@@ -253,7 +262,7 @@ public final class CombatAssist {
         float speed = HitboxConfig.aimSpeed;
         float response = net.minecraft.util.Mth.clamp(0.30F + speed * 0.22F, 0.34F, 0.62F);
         float maxYawStep = 5.0F + speed * 11.0F;
-        float maxPitchStep = maxYawStep * 0.72F;
+        float maxPitchStep = maxYawStep * 0.78F;
 
         float yawStep = net.minecraft.util.Mth.clamp(yawDifference * response,
                 -maxYawStep, maxYawStep);
