@@ -88,7 +88,7 @@ public final class CombatAssist {
         stateTicks++;
         Player target = findSlamTarget(client);
         if (target == null || player.distanceTo(target) > HitboxConfig.combatRange
-                || stateTicks > 50) {
+                || stateTicks > 100) {
             resetSlam(client);
             return;
         }
