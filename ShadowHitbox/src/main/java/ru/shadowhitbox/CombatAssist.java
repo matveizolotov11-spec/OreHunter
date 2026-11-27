@@ -143,9 +143,10 @@ public final class CombatAssist {
     }
 
     private static void queueVanillaAttack(Minecraft client) {
-        // Queue the configured vanilla attack binding. This goes through the normal
-        // client attack path so other client mods listening for a real attack can react.
-        KeyMapping.click(InputConstants.Type.MOUSE.getOrCreate(0));
+        // Queue the user's actual attack binding (not a hard-coded mouse button).
+        // Vanilla consumes this as a normal attack on the next input pass, allowing
+        // AutoBreachSwap and other mods hooked into the normal attack path to observe it.
+        KeyMapping.click(client.options.keyAttack.getKey());
     }
 
     private static Player findSlamTarget(Minecraft client) {
