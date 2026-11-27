@@ -23,6 +23,7 @@ public final class BowRapidFireClient implements ClientModInitializer {
     private static int cooldown;
     private static int previousSlot = -1;
     private static boolean wasUsing;
+    private static int swappedInventorySlot = -1;
     private static boolean enabled = true;
     private static final int MIN_CHARGE_TICKS = 1;
 
@@ -71,6 +72,7 @@ public final class BowRapidFireClient implements ClientModInitializer {
                 // Move the inventory bow into the selected hotbar slot.
                 ItemStack hand = inv.getSelectedItem();
                 ItemStack bow = inv.getItem(bowSlot);
+                swappedInventorySlot = bowSlot;
                 inv.setItem(bowSlot, hand);
                 inv.setItem(inv.getSelectedSlot(), bow);
                 if (previousSlot < 0) previousSlot = inv.getSelectedSlot();
@@ -114,8 +116,16 @@ public final class BowRapidFireClient implements ClientModInitializer {
             client.player.releaseUsingItem();
         }
         if (client.player != null && previousSlot >= 0 && previousSlot < 9) {
-            client.player.getInventory().setSelectedSlot(previousSlot);
+            Inventory inv = client.player.getInventory();
+            if (swappedInventorySlot >= 9 && swappedInventorySlot < inv.getContainerSize()) {
+                ItemStack held = inv.getItem(previousSlot);
+                ItemStack stored = inv.getItem(swappedInventorySlot);
+                inv.setItem(previousSlot, stored);
+                inv.setItem(swappedInventorySlot, held);
+            }
+            inv.setSelectedSlot(previousSlot);
         }
+        swappedInventorySlot = -1;
         previousSlot = -1;
         chargeTicks = 0;
         cooldown = 0;
