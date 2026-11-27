@@ -4,16 +4,23 @@
   "version": "${version}",
   "name": "ShadowHitbox PvP",
   "description": "Client-side PvP aiming assistance and hitbox visualization for Minecraft 1.21.11.",
-  "authors": ["ShadowHitbox"],
+  "authors": [
+    "ShadowHitbox"
+  ],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["ru.shadowhitbox.ShadowHitboxClient"]
+    "client": [
+      "ru.shadowhitbox.ShadowHitboxClient"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.18.4",
     "minecraft": "1.21.11",
     "java": ">=21",
     "fabric-api": ">=0.141.6"
+  },
+  "suggests": {
+    "autobreachswap": "*"
   }
 }
