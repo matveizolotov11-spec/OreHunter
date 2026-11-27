@@ -1,5 +1,6 @@
 package ru.shadowhitbox;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -145,7 +146,7 @@ public final class CombatAssist {
         // Queue the user's actual attack binding (not a hard-coded mouse button).
         // Vanilla consumes this as a normal attack on the next input pass, allowing
         // AutoBreachSwap and other mods hooked into the normal attack path to observe it.
-        KeyMapping.click(client.options.keyAttack.getKey());
+        KeyMapping.click(InputConstants.getKey(client.options.keyAttack.saveString()));
     }
 
     private static Player findSlamTarget(Minecraft client) {
