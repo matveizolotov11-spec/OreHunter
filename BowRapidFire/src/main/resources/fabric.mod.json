@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "bowrapidfire",
+  "version": "${version}",
+  "name": "BowRapidFire",
+  "description": "Hold-to-fire bow helper for Minecraft 1.21.11.",
+  "authors": ["BowRapidFire"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["ru.bowrapidfire.BowRapidFireClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": ">=0.141.6"
+  }
+}
